@@ -1,0 +1,31 @@
+# 맥 os에서 폴더 접근 시 생기는 폴더에 대한 메타데이터를 저장하는 파일
+.DS_Store
+
+# Local .terraform directory
+.terraform/
+
+# Terraform state files
+*.tfstate
+*.tfstate.*
+
+# Backup files
+*.tfstate.backup
+
+# Terraform plan files
+*.tfplan
+
+# Variables file
+*.tfvars
+
+# Override files
+override.tf
+override.tf.json
+
+# Workspace files
+*.tfworkspace
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*~
