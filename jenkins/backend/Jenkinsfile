@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         AWS_REGION = 'ap-northeast-2'
-        ECR_REPO_NAME = 'ktb-eatbook-be-ecr'
+        ECR_REPO_NAME = 'eatbook-be-ecr'
         IMAGE_TAG = "latest"
         COMPOSE_FILE = 'docker-compose.yml'
 
