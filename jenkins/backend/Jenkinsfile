@@ -1,7 +1,6 @@
 pipeline {
     agent any
     environment {
-        REPO = 'ktb-eatbook/eatbook-backoffice-backend'
         AWS_REGION = 'ap-northeast-2'
         ECR_REPO_NAME = 'ktb-eatbook-be-ecr'
         IMAGE_TAG = "latest"
@@ -14,7 +13,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git url: 'https://github.com/${REPO}.git', branch: 'feature/cicd-test', credentialsId: 'github-access-token-id'
+                git url: 'https://github.com/ktb-eatbook/eatbook-backoffice-backend.git', branch: 'feature/cicd-test', credentialsId: 'github-access-token-id'
             }
         }
         stage('Build Docker Image') {
