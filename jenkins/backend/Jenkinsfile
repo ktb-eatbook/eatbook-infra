@@ -4,7 +4,7 @@ pipeline {
         AWS_REGION = 'ap-northeast-2'
         ECR_REPO_NAME = 'eatbook-be-ecr'
         IMAGE_TAG = "latest"
-        ECR_REPO_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        ECR_REPO_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}"
         COMPOSE_FILE = 'docker-compose.yml'
 
         // SSH Key IDs (Jenkins Credentials ID)
