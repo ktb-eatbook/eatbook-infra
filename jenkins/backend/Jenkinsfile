@@ -52,7 +52,9 @@ pipeline {
                      fuser -k 8090/tcp || true  # 8090 포트를 점유한 프로세스 강제 종료
                      docker network prune -f || true  # 네트워크 초기화함
                      sleep 5  # 잠시 대기하여 포트 해제
-                     docker-compose --env-file /var/jenkins_env/.env up --force-recreate -d
+                     docker-compose up --force-recreate -d
+                     # Docker 시스템 리소스 정리 (불필요한 이미지, 컨테이너, 네트워크 삭제)
+                     docker system prune -af || true  # 사용하지 않는 이미지, 컨테이너, 네트워크 정리
                      '''
                  }
             }
