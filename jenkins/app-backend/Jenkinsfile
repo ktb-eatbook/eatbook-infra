@@ -16,7 +16,7 @@ pipeline {
         stage('Checkout Backend Code') {
             steps {
                 dir('backend') { // backend 디렉토리 생성 및 코드 체크아웃
-                    git url: 'https://github.com/ktb-eatbook/eatbook-backoffice-backend.git', branch: 'feature/cicd-test', credentialsId: 'github-access-token-id'
+                    git url: 'https://github.com/ktb-eatbook/eatbook-backoffice-backend.git', branch: 'feat/ci-cd', credentialsId: 'github-access-token-id'
                 }
             }
         }
