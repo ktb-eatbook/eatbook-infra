@@ -33,6 +33,7 @@ pipeline {
                     // Dockerfile과 docker-compose.yml을 backend 디렉토리로 복사
                     sh 'cp infra/docker/app-backend/Dockerfile backend/'
                     sh 'cp infra/docker/app-backend/docker-compose.yml backend/'
+                    sh 'cp -r config/* backend/src/main/resources/'
                 }
             }
         }
