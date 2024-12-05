@@ -7,21 +7,30 @@ pipeline {
         IMAGE_TAG = "latest"
         ECR_REPO_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}"
         COMPOSE_FILE = 'docker-compose.yml'
+
+        // SSH Key IDs (Jenkins Credentials ID)
+        PRIVATE_INSTANCE_SSH_KEY_ID = 'instance-ssh-key-id'
+        BASTION_HOST_SSH_KEY_ID = 'instance-ssh-key-id'
     }
     stages {
-        stage('Checkout Code') {
+        stage('Checkout Backend Code') {
             steps {
-                dir('backend') {
+                dir('backend') { // backend 디렉토리 생성 및 코드 체크아웃
                     git url: 'https://github.com/ktb-eatbook/eatbook-app-backend.git', branch: 'feat/ci-cd', credentialsId: 'github-access-token-id'
                 }
-                dir('infra') {
+            }
+        }
+        stage('Checkout Infra Code') {
+            steps {
+                dir('infra') { // infra 디렉토리 생성 및 코드 체크아웃
                     git url: 'https://github.com/ktb-eatbook/eatbook-infra.git', branch: 'main', credentialsId: 'github-access-token-id'
                 }
             }
         }
-        stage('Move Config Files') {
+        stage('Move Docker Files to Backend') {
             steps {
                 script {
+                    // Dockerfile과 docker-compose.yml을 backend 디렉토리로 복사
                     sh '''
                     cp infra/docker/app-backend/Dockerfile backend/
                     cp infra/docker/app-backend/docker-compose.yml backend/
@@ -34,20 +43,43 @@ pipeline {
         }
         stage('Build Docker Image') {
             steps {
-                dir('backend') {
+                dir('backend') { // backend 디렉토리에서 Dockerfile 빌드
                     script {
                         docker.build("${ECR_REPO_NAME}:${IMAGE_TAG}", ".")
                     }
                 }
             }
         }
-        stage('Deploy with Docker Compose') {
+        stage('Login to AWS ECR') {
             steps {
-                dir('backend') {
+                script {
+                    withAWS(region: "${AWS_REGION}", credentials: 'aws-credentials-id') {
+                        sh 'aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPO_URI}'
+                    }
+                }
+            }
+        }
+        stage('Push to ECR') {
+            steps {
+                script {
+                    sh "docker tag ${ECR_REPO_NAME}:${IMAGE_TAG} ${ECR_REPO_URI}:${IMAGE_TAG}"
+                    sh "docker push ${ECR_REPO_URI}:${IMAGE_TAG}"
+                }
+            }
+        }
+        stage('Deploy on Private Instance with Docker Compose') {
+            steps {
+                dir('backend') { // docker-compose.yml이 있는 backend 디렉토리로 이동
                     script {
                         sh '''
                         docker-compose -f ${COMPOSE_FILE} down || true
+                        docker pull ${ECR_REPO_URI}:${IMAGE_TAG}
+                        docker rm -f spring-app || true  # 기존 컨테이너 강제로 삭제
+                        fuser -k 8090/tcp || true  # 8090 포트 점유 프로세스 강제 종료
+                        docker network prune -f || true  # 네트워크 초기화
+                        sleep 5  # 포트 해제 대기
                         docker-compose -f ${COMPOSE_FILE} up --force-recreate -d
+                        docker system prune -af || true  # 불필요한 리소스 정리
                         '''
                     }
                 }
