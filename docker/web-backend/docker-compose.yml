@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  spring-app:
+    image: 992382409749.dkr.ecr.ap-northeast-2.amazonaws.com/eatbook-be-ecr:latest
+    container_name: spring-app
+    ports:
+      - "8090:8090"
+    env_file:
+      - ./src/main/resources/.env
