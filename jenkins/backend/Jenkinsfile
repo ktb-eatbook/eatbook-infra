@@ -33,6 +33,7 @@ pipeline {
                     sh '''
                     cp infra/docker/web-backend/Dockerfile backend/
                     cp infra/docker/web-backend/docker-compose.yml backend/
+                    cp config/.env backend/src/main/resources/
                     cp -r config/* backend/src/main/resources/
                     sudo chown jenkins:jenkins backend/src/main/resources/.env
                     sudo chmod 644 backend/src/main/resources/.env
