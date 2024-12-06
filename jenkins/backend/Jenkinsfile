@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         AWS_REGION = 'ap-northeast-2'
-        ECR_REPO_NAME = 'eatbook-be-app-ecr'
+        ECR_REPO_NAME = 'eatbook-be-ecr'
         AWS_ACCOUNT_ID = '992382409749'
         IMAGE_TAG = "latest"
         ECR_REPO_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}"
@@ -16,7 +16,7 @@ pipeline {
         stage('Checkout Backend Code') {
             steps {
                 dir('backend') {
-                    git url: 'https://github.com/ktb-eatbook/eatbook-app-backend.git', branch: 'feature/authentication', credentialsId: 'github-access-token-id'
+                    git url: 'https://github.com/ktb-eatbook/eatbook-backoffice-backend.git', branch: 'feature/authentication', credentialsId: 'github-access-token-id'
                 }
             }
         }
@@ -31,8 +31,8 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    cp infra/docker/app-backend/Dockerfile backend/
-                    cp infra/docker/app-backend/docker-compose.yml backend/
+                    cp infra/docker/web-backend/Dockerfile backend/
+                    cp infra/docker/web-backend/docker-compose.yml backend/
                     cp -r config/* backend/src/main/resources/
                     sudo chown jenkins:jenkins backend/src/main/resources/.env
                     sudo chmod 644 backend/src/main/resources/.env
