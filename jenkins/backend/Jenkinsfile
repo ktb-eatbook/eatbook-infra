@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         AWS_REGION = 'ap-northeast-2'
-        ECR_REPO_NAME = 'eatbook-be-ecr'
+        ECR_REPO_NAME = 'eatbook-be-app-ecr'
         AWS_ACCOUNT_ID = '992382409749'
         IMAGE_TAG = "latest"
         ECR_REPO_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}"
@@ -13,15 +13,39 @@ pipeline {
         BASTION_HOST_SSH_KEY_ID = 'instance-ssh-key-id'
     }
     stages {
-        stage('Checkout Code') {
+        stage('Checkout Backend Code') {
             steps {
-                git url: 'https://github.com/ktb-eatbook/eatbook-backoffice-backend.git', branch: 'feature/authentication', credentialsId: 'github-access-token-id'
+                dir('backend') {
+                    git url: 'https://github.com/ktb-eatbook/eatbook-app-backend.git', branch: 'feature/authentication', credentialsId: 'github-access-token-id'
+                }
+            }
+        }
+        stage('Checkout Infra Code') {
+            steps {
+                dir('infra') {
+                    git url: 'https://github.com/ktb-eatbook/eatbook-infra.git', branch: 'main', credentialsId: 'github-access-token-id'
+                }
+            }
+        }
+        stage('Move Docker Files to Backend') {
+            steps {
+                script {
+                    sh '''
+                    cp infra/docker/app-backend/Dockerfile backend/
+                    cp infra/docker/app-backend/docker-compose.yml backend/
+                    cp -r config/* backend/src/main/resources/
+                    sudo chown jenkins:jenkins backend/src/main/resources/.env
+                    sudo chmod 644 backend/src/main/resources/.env
+                    '''
+                }
             }
         }
         stage('Build Docker Image') {
             steps {
-                script {
-                    docker.build("${ECR_REPO_NAME}:${IMAGE_TAG}")
+                dir('backend') {
+                    script {
+                        docker.build("${ECR_REPO_NAME}:${IMAGE_TAG}")
+                    }
                 }
             }
         }
@@ -44,19 +68,20 @@ pipeline {
         }
         stage('Deploy on Private Instance with Docker Compose') {
             steps {
-                 script {
-                     sh '''
-                     docker-compose down || true
-                     docker pull ${ECR_REPO_URI}:${IMAGE_TAG}
-                     docker rm -f spring-app || true  # 기존 컨테이너 강제로 삭제함
-                     fuser -k 8090/tcp || true  # 8090 포트를 점유한 프로세스 강제 종료
-                     docker network prune -f || true  # 네트워크 초기화함
-                     sleep 5  # 잠시 대기하여 포트 해제
-                     docker-compose up --force-recreate -d
-                     # Docker 시스템 리소스 정리 (불필요한 이미지, 컨테이너, 네트워크 삭제)
-                     docker system prune -af || true  # 사용하지 않는 이미지, 컨테이너, 네트워크 정리
-                     '''
-                 }
+                dir('backend') {
+                    script {
+                        sh '''
+                        docker-compose -f ${COMPOSE_FILE} down || true
+                        docker pull ${ECR_REPO_URI}:${IMAGE_TAG}
+                        docker rm -f spring-app || true
+                        fuser -k 8090/tcp || true
+                        docker network prune -f || true
+                        sleep 5
+                        docker-compose -f ${COMPOSE_FILE} up --force-recreate -d
+                        docker system prune -af || true
+                        '''
+                    }
+                }
             }
         }
     }
