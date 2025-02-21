@@ -15,8 +15,14 @@ pipeline {
     stages {
         stage('Checkout Backend Code') {
             steps {
-                dir('backend') { // backend 디렉토리 생성 및 코드 체크아웃
-                    git url: 'https://github.com/ktb-eatbook/eatbook-app-backend.git', branch: 'main', credentialsId: 'github-access-token-id'
+                dir('backend') {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: '*/main']],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [[$class: 'SubmoduleOption', disableSubmodules: true]],
+                        userRemoteConfigs: [[url: 'https://github.com/ktb-eatbook/eatbook-app-backend.git', credentialsId: 'github-access-token-id']]
+                    ])
                 }
             }
         }
