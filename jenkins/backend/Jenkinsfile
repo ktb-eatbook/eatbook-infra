@@ -16,7 +16,13 @@ pipeline {
         stage('Checkout Backend Code') {
             steps {
                 dir('backend') {
-                    git url: 'https://github.com/ktb-eatbook/eatbook-backoffice-backend.git', branch: 'hotfix/v1', credentialsId: 'github-access-token-id'
+                  checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: 'hotfix/v1']],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [[$class: 'SubmoduleOption', disableSubmodules: true]],
+                        userRemoteConfigs: [[url: 'https://github.com/ktb-eatbook/eatbook-backoffice-backend.git', credentialsId: 'github-access-token-id']]
+                    ])
                 }
             }
         }
